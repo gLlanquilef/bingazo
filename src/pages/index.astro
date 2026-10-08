@@ -1,0 +1,113 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { LETTERS } from '../lib/bingo';
+import { DEFAULT_PATTERN_ID, GROUPS, PATTERNS } from '../lib/patterns';
+
+const columns = LETTERS.map((letter, c) => ({
+	letter,
+	numbers: Array.from({ length: 15 }, (_, k) => c * 15 + k + 1),
+}));
+---
+
+<Layout
+	title="Bingazo · Tablero de bingo para proyectar"
+	description="Tablero de bingo 75 para proyectar: muestra los números que van saliendo, el último cantado y la figura a formar."
+>
+	<header class="hero">
+		<h1 class="logo" aria-label="Bingazo">
+			{[...'BINGO'].map((l, c) => <span class="ball" data-col={c}>{l}</span>)}
+		</h1>
+	</header>
+
+	<main class="layout">
+		<section class="panel controls" aria-labelledby="controls-title">
+			<h2 id="controls-title">Control del sorteo</h2>
+			<form id="call-form" autocomplete="off">
+				<label for="call-input" class="sr-only">Número que salió</label>
+				<input
+					id="call-input"
+					type="text"
+					inputmode="text"
+					placeholder="Ej: 7, B7 o varios: 12 B3 N40"
+					enterkeyhint="done"
+				/>
+				<button type="submit" class="primary">Agregar</button>
+			</form>
+			<p class="msg" id="msg" role="status" aria-live="polite"></p>
+			<div class="row">
+				<span class="count"><strong id="count">0</strong> / 75 cantados</span>
+				<button type="button" id="undo">Deshacer</button>
+				<button type="button" id="reset" class="danger">Reiniciar</button>
+				<button type="button" id="present" class="primary" hidden>Proyectar en pantalla completa</button>
+			</div>
+
+			<h3>Figura a formar</h3>
+			{GROUPS.map((group) => (
+				<fieldset>
+					<legend>{group}</legend>
+					<div class="chips">
+						{PATTERNS.filter((p) => p.group === group).map((p) => (
+							<label class="chip">
+								<input
+									type="radio"
+									name="pattern"
+									value={p.id}
+									checked={p.id === DEFAULT_PATTERN_ID}
+								/>
+								<span class="mini" aria-hidden="true">
+									{Array.from({ length: 25 }, (_, i) => (
+										<i class:list={{ on: p.variants[0].includes(i) }} />
+									))}
+								</span>
+								<span class="chip-name">{p.name}</span>
+							</label>
+						))}
+					</div>
+				</fieldset>
+			))}
+		</section>
+
+		<section class="stage" id="stage" aria-label="Pantalla del sorteo">
+			<div class="board-grid" id="board">
+				{columns.map(({ letter, numbers }, c) => (
+					<div class="board-row" data-col={c}>
+						<span class="board-letter">{letter}</span>
+						{numbers.map((n) => (
+							<button type="button" class="num" data-n={n} aria-pressed="false">{n}</button>
+						))}
+					</div>
+				))}
+			</div>
+
+			<div class="stage-low">
+				<div class="last" id="last" data-col="">
+					<span class="last-label">Último número</span>
+					<span class="last-main">
+						<span class="last-letter" id="last-letter"></span>
+						<span class="last-number" id="last-number">—</span>
+					</span>
+				</div>
+
+				<div class="recent">
+					<span class="recent-label">Anteriores</span>
+					<ol id="recent" class="recent-list"></ol>
+				</div>
+
+				<div class="figure">
+					<span class="figure-label">Figura a formar</span>
+					<div class="figure-grid" id="figure"></div>
+					<strong class="figure-name" id="figure-name"></strong>
+					<span class="figure-note" id="figure-note"></span>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<footer>
+		<p>Hecho con cariño por <a href="https://cantariadigital.cl">Cantaría Digital</a></p>
+	</footer>
+
+	<script>
+		import '../scripts/game';
+	</script>
+</Layout>
